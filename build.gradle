@@ -5,6 +5,8 @@
  * This generated file contains a commented-out sample Java project to get you started.
  * For more details take a look at the Java Quickstart chapter in the Gradle
  * user guide available at https://docs.gradle.org/2.11/userguide/tutorial_java_projects.html
+ *
+ * @author Laurent Krishnathas
  */
 
 import org.apache.commons.io.output.TeeOutputStream
@@ -39,72 +41,114 @@ dependencies {
 }
 
 
-task traceroute()<<{
-    logger.lifecycle "Please wait..., this may take several hours ..."
-    def hostList=[
-        "s3-us-west-2.amazonaws.com",
-        "s3.amazonaws.com",
-        "s3-external-1.amazonaws.com",
-        /*
-        "s3-us-west-2.amazonaws.com",
-        "s3-us-west-1.amazonaws.com", 
-        "s3-eu-west-1.amazonaws.com",  
-        "s3.eu-central-1.amazonaws.com",
-        "s3-eu-central-1.amazonaws.com"
-        */
-    ]
+task traceroute(){
+    description="tracing some hostnames ..."
+    ext.destinationDir="$buildDir/$name" as File
 
-    ant.mkdir(dir:buildDir)
+    doLast{ 
+        logger.lifecycle "Please wait..., this may take several hours ..."
+        def hostList=[
+            "s3-us-west-2.amazonaws.com",
+            "s3.amazonaws.com",
+            "s3-external-1.amazonaws.com",
+            /*
+            "s3-us-west-2.amazonaws.com",
+            "s3-us-west-1.amazonaws.com", 
+            "s3-eu-west-1.amazonaws.com",  
+            "s3.eu-central-1.amazonaws.com",
+            "s3-eu-central-1.amazonaws.com"
+            */
+        ]
 
-    def hostname="hostname".execute().text.trim()
+        ant.mkdir(dir:destinationDir)
 
-    File file="$buildDir/traceroute_${hostname}.txt" as File
+        def hostname="hostname".execute().text.trim()
 
-    def sep="\n---------------------------------------------------"
+        File file="$destinationDir/traceroute_${hostname}.txt" as File
 
-    
-    file.withWriter{ writer->
+        def sep="\n---------------------------------------------------"        
+        file.withWriter{ writer->
 
-        writer.println("hostname is $hostname")
+            writer.println("hostname is $hostname")
 
-        hostList.each{ host->
-            def byteOutput=new ByteArrayOutputStream()
-            //def teeOutput=new TeeOutputStream(, System.out)
+            hostList.each{ host->
+                def byteOutput=new ByteArrayOutputStream()
+                //def teeOutput=new TeeOutputStream(, System.out)
 
+                exec{
+                    if(System.properties.isdebug=="true"){
+                        executable "ping"
+                        args "-c", 1, host
+                    }else{
+                        executable "traceroute"
+                        args host               
+                    }
+                    
+                    standardOutput  byteOutput
+                    errorOutput  byteOutput
+                    ignoreExitValue true
 
-            exec{
-                if(System.properties.isdebug=="true"){
-                    executable "ping"
-                    args "-c", 1, host
-                }else{
-                    executable "traceroute"
-                    args host               
-                }
-                
-                standardOutput  byteOutput
-                errorOutput  byteOutput
-                ignoreExitValue true
+                    def msg="$sep\n$executable ${args.join(" ")} ..."
+                    logger.lifecycle(msg)
+                    writer.println(msg)
+                } 
 
-                def msg="$sep\n$executable ${args.join(" ")} ..."
-                logger.lifecycle(msg)
-                writer.println(msg)
-            } 
-
-            def text=byteOutput.toString()
-            writer.println(text)
+                def text=byteOutput.toString()
+                writer.println(text)
+            }
         }
-    }
 
-    logger.lifecycle "Done, please send the $file to lk@dotmatics.com, thank you."
+        logger.lifecycle "Done, please send the $file to lk@dotmatics.com, thank you."
+    }
+}
+
+task hello{
+    description="hello test"
+
+    doLast{
+        println "hello $it, $it.description"
+    }
 }
 
 
+task fillDisk(){
+    description="will fill the hard disk to errase all deleted files"
+    ext.destinationDir="$buildDir/$name" as File
 
+    doLast{
+        logger.lifecycle "filling ..."
+        def nbLines=1000
+        def nbGig=250
+        def nbFilesPerGig=1000
+        def line="absbsgsdfgsgrshstgdfyujruyretdgsfhgryterytjfghfdsgeyrjfgdhdsgjtfgdhsgatyeujfghgeyeujgffhgey"
 
+        if(false){
+            logger.lifecycle "using debug ..."
+            nbLines=10
+            nbGig=2
+            nbFilesPerGig=50
+        }
+        
+        ant.mkdir(dir:destinationDir)
 
+        def text=new StringBuilder()
 
+        nbLines.times{
+            text<<line
+        }
 
-
-
-
-
+        nbGig.times{g->
+            def dir="$destinationDir/$g" as File
+            ant.mkdir(dir:dir)
+            nbFilesPerGig.times{n->
+                if(n/100==0){
+                   print "."
+                }
+                def time=new Date().time
+                def file="$dir/${n}_${time}.txt" as File
+                file.text=text
+            }
+            println "${g}G done."
+        }
+    }
+}
