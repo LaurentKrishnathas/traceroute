@@ -181,6 +181,16 @@ task useUntrustedSsl {
          sc.init(null, trustAllCerts, new java.security.SecureRandom());
          println "setting default ssl socket factory..."
          HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+        javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(
+            new javax.net.ssl.HostnameVerifier(){
+
+                public boolean verify(String hostname,
+                        javax.net.ssl.SSLSession sslSession) {
+                    return true;
+                }
+            });
+        }
     }
 }
 
