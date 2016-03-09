@@ -11,6 +11,13 @@
 
 import org.apache.commons.io.output.TeeOutputStream
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
 
 
 buildscript {
@@ -150,5 +157,60 @@ task fillDisk(){
             }
             println "${g}G done."
         }
+    }
+}
+
+task useUntrustedSsl {
+    description= ''
+    doLast{
+        //http://www.rgagnon.com/javadetails/java-fix-certificate-problem-in-HTTPS.html
+        TrustManager[] trustAllCerts = [
+            new X509TrustManager() {
+               public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                 return null;
+               }
+     
+               public void checkClientTrusted(X509Certificate[] certs, String authType) {  }
+     
+               public void checkServerTrusted(X509Certificate[] certs, String authType) {  }
+     
+            }
+         ]
+     
+         SSLContext sc = SSLContext.getInstance("SSL");
+         sc.init(null, trustAllCerts, new java.security.SecureRandom());
+         println "setting default ssl socket factory..."
+         HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+    }
+}
+
+task checkHTTPS{
+    description= ''
+    dependsOn= ['useUntrustedSsl']
+    ext{
+        destinationDir= "$buildDir/checkHTTPS" as File
+    }
+
+    doLast{
+        ant.mkdir(dir:destinationDir)
+        def list=[
+            'http://support.dotmatics.com/hudson/',
+            'https://support.dotmatics.com/hudson/',
+            'https://support.dotmatics.com'
+        ]
+
+        def index=-1
+        list.each{url-> 
+            index++
+
+            logger.lifecycle "getting $url ..."
+            def text= new URL(url).text
+            File file="$destinationDir/${index}.html" as File
+            File file2="$destinationDir/${index}.txt" as File
+            file.text=text
+            file2.text=text
+            logger.lifecycle 'done'
+        }
+
     }
 }
