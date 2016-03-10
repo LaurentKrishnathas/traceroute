@@ -214,3 +214,23 @@ task checkHTTPS{
 
     }
 }
+
+task createLicenceSvnserve(type: Exec){
+    description= ''
+	executable = "sc"
+	args "create", "svnserver_licences", 'binpath= "\"C:\\Program Files (x86)\\CollabNet\\Subversion Server\\svnserve.exe\" --service -r e:\\svnRepositories\\licences"', 'displayname= "Subversion server licences"', 'depend= Tcpip', 'start= auto'	
+}
+
+
+task removeLicenceSvnserve(type: Exec){
+    description= ''
+	
+	executable= "sc"
+	args "delete svnserver_licences"
+}
+
+
+
+
+
+
