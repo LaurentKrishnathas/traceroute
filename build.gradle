@@ -238,7 +238,38 @@ task removeLicenceSvnserve(type: Exec){
 	args "delete svnserver_licences"
 }
 
+task generateKeystore(type: Exec){ task->
+    description= 'Generate a keystore for selfsigning jar, no need to sign'
+    
+    ext{
+        destinationDir= "$buildDir/${task.name}" as File
+        destinationFile= "$destinationDir/keystore.jks" as File
+            
+        inputs.files "$rootDir/build.gradle", "$rootDir/gradle.properties"
+        outputs.files ext.destinationFile   
+    }
+        
+    workingDir ext.destinationDir
 
+    executable 'keytool'    
+    args '-genkey'
+    args '-noprompt' 
+    args '-alias', signJarAlias
+    args '-dname', "CN=dotmatics.com, OU=ID, O=DOTMATICS, L=Build, S=Build, C=GB"
+    args '-keystore', destinationFile
+    args '-storepass', signJarStorepass
+    args '-keypass', signJarStorepass
+    args '-validity', '365'
+    
+    doFirst{
+        ant.delete(dir:ext.destinationDir)
+        ant.mkdir(dir:ext.destinationDir)
+    }
+    
+    doLast{
+        assert ext.destinationFile.exists(): "$destinationFile must be exists"  
+    }
+} 
 
 
 
