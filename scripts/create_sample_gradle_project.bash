@@ -12,3 +12,5 @@ mkdir -p buildSrc/src/test/java
 mkdir -p buildSrc/src/test/groovy
 mkdir -p buildSrc/src/test/resources 
 
+touch gradle.properties
+touch README.md
