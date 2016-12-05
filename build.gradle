@@ -280,7 +280,7 @@ task gitPull(){task->
     description="??"
 
     // ext.destinationDir="$buildDir/$task.name" as File
-    
+
     doLast{
         delete(destinationDir)
         mkdir(destinationDir)
@@ -390,7 +390,7 @@ task gitGradlew{task->
         project.delete(destinationFile)
         destinationFile.text="""
             @echo off
-            bin\\gits\\git pull
+            bin\\bin\\git pull
             gradlew.bat %1 %2 %3 %4 %5 -Dlog=debug      
         """.stripIndent()               
     }
