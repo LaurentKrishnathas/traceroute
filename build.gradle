@@ -273,9 +273,22 @@ task generateKeystore(type: Exec){ task->
     }
 } 
 
+task installGit(type: Exec){
+    dependsOn 'downloadWindowsGit32'
+    description="install git"
+    doFirst{
+        def file=downloadWindowsGit32.destinationDir.listFiles().findAny{it.name.endsWith('.exe')}
+        executable file.name
+        workingDir "$rootDir/bin" as File
+        mkdir(workingDir)
+        args '-y'
+        logger.lifecycle "$executable ${args.join(' ')}"
+    }
+}
+
 task downloadWindowsGit32(type: devops.DownloadTask){
     description="download git 32 to destination folder"
-    destinationDir="$rootDir/gits" as File
+    destinationDir="$rootDir/bin/gits" as File
     url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"
 }
 
