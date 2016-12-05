@@ -275,6 +275,26 @@ task downloadGit(type: devops.DownloadTask){task->
     // 64 url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
 }
 
+task gitPull(){task->
+    dependsOn 'makeGitRepo'
+    description="??"
+
+    // ext.destinationDir="$buildDir/$task.name" as File
+    
+    doLast{
+        delete(destinationDir)
+        mkdir(destinationDir)
+
+        exec{
+            executable="cmd"
+            workingDir rootDir
+            args "/C", makeGitRepo.gitExe, 'pull'
+            logger.lifecycle "/> $executable ${args.join(' ')}"
+        }
+        // new File(destinationDir, "output.txt").text="done"
+    }
+}
+
 task makeGitRepo(){task->
     dependsOn 'installGit'
     description="??"
@@ -296,15 +316,20 @@ task makeGitRepo(){task->
                 logger.lifecycle "/> $executable ${args.join(' ')}"
             }
 
-            ant.copy(todir: "$rootDir/.git"){
-                fileset(dir: "$destinationDir/utils/.git")
+            def checkoutGitDir="$destinationDir/utils/.git" as File
+            assert checkoutGitDir.exists(): "$checkoutGitDir must exits"
+            ant.copy(todir: gitDir){
+                fileset(dir: checkoutGitDir)
             }
+
+            assert gitDir.exists(): "$gitDir must exits"
+            assert gitDir.listFile().size()>0: "$gitDir size must be not zero"
         }
     }
 }
 
 task installGit(){task->
-    dependsOn 'exractGit'
+    dependsOn 'extractGit'
     description="???"
 
     ext{
@@ -316,40 +341,43 @@ task installGit(){task->
     doLast{
         mkdir(binDir)
         ant.copy(todir: binDir){
-            fileset(dir: "$exractGit.destinationDir/PortableGit"){
+            fileset(dir: "$extractGit.destinationDir/PortableGit"){
                 include(name: "**/*")
             }
         }
     }
 }
 
-task exractGit(type: Exec){task->
+task extractGit(){task->
     dependsOn 'downloadGit'
     description="install git"
+
     ext{
         destinationDir="$buildDir/$task.name" as File
-        exeFile="$destinationDir/extract.exe" as File
+        exeFile="$destinationDir/${task.name}.exe" as File
     }
 
     outputs.dir destinationDir
 
-    workingDir destinationDir
-
-    executable 'cmd'
-    args "/C", exeFile.name, '-y'
-
-    doFirst{
+    doLast{
         def file=downloadGit.destinationDir.listFiles().find{it.name.endsWith('.exe')}
         assert file.exists():'exe file is missing'
         ant.copy(file: file, tofile: exeFile)
         mkdir(workingDir)
-        logger.lifecycle "/> $executable ${args.join(' ')}"
+
+        exec{
+            workingDir destinationDir
+
+            executable 'cmd'
+            args "/C", exeFile.name, '-y'
+            logger.lifecycle "/> $executable ${args.join(' ')}"
+        }
+
     }
 }
 
-
-
 task gitGradlew{task->
+    dependsOn "installGit"
     description= "generate  ${task.name}.bat"
 
     ext{
