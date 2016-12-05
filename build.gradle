@@ -43,13 +43,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
-
-clean.doLast{
-    logger.warn "deleting $downloadWindowsGit32.destinationDir"
-    ant.delete(dir: downloadWindowsGit32.destinationDir)
-}
-
-
 task traceroute(){
     description="tracing some hostnames ..."
     ext.destinationDir="$buildDir/$name" as File
@@ -273,30 +266,87 @@ task generateKeystore(type: Exec){ task->
     }
 } 
 
-task installGit(type: Exec){
-    dependsOn 'downloadWindowsGit32'
-    description="install git"
-    doFirst{
-        def file=downloadWindowsGit32.destinationDir.listFiles().findAny{it.name.endsWith('.exe')}
-        executable file.name
-        workingDir "$rootDir/bin" as File
-        mkdir(workingDir)
-        args '-y'
-        logger.lifecycle "$executable ${args.join(' ')}"
+
+task downloadGit(type: devops.DownloadTask){task->
+    description="download git 32 to destination folder"
+    destinationDir="$buildDir/$task.name" as File
+    url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"
+    
+    // 64 url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
+}
+
+task makeGitRepo(){task->
+    dependsOn 'installGit'
+    description="??"
+
+    ext{
+        destinationDir="$buildDir/$task.name" as File
+        gitDir="$rootDir/.git" as File
+        gitExe="$rootDir/bin/bin/git.exe" as File
+    }
+
+    doLast{
+        delete(destinationDir)
+        mkdir(destinationDir)
+        if(!gitDir.exists()){
+            exec{
+                executable="cmd"
+                workingDir destinationDir
+                args "/C", gitExe, 'clone', "https://github.com/LaurentKrishnathas/utils.git"
+                logger.lifecycle "/> $executable ${args.join(' ')}"
+            }
+
+            ant.copy(todir: "$rootDir/.git"){
+                fileset(dir: "$destinationDir/utils/.git")
+            }
+        }
     }
 }
 
-task downloadWindowsGit32(type: devops.DownloadTask){
-    description="download git 32 to destination folder"
-    destinationDir="$rootDir/bin/gits" as File
-    url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"
+task installGit(){task->
+    dependsOn 'exractGit'
+    description="???"
+
+    ext{
+        binDir="$rootDir/bin" as File    
+    }
+
+    outputs.dir binDir
+
+    doLast{
+        mkdir(binDir)
+        ant.copy(todir: binDir){
+            fileset(dir: "$exractGit.destinationDir/PortableGit"){
+                include(name: "**/*")
+            }
+        }
+    }
 }
 
-task downloadWindowsGit64(type: devops.DownloadTask){
-    description="download git 32 to destination folder"
-    destinationDir="$rootDir/bin/gits" as File
-    url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
+task exractGit(type: Exec){task->
+    dependsOn 'downloadGit'
+    description="install git"
+    ext{
+        destinationDir="$buildDir/$task.name" as File
+        exeFile="$destinationDir/extract.exe" as File
+    }
+
+    outputs.dir destinationDir
+
+    workingDir destinationDir
+
+    executable 'cmd'
+    args "/C", exeFile.name, '-y'
+
+    doFirst{
+        def file=downloadGit.destinationDir.listFiles().find{it.name.endsWith('.exe')}
+        assert file.exists():'exe file is missing'
+        ant.copy(file: file, tofile: exeFile)
+        mkdir(workingDir)
+        logger.lifecycle "/> $executable ${args.join(' ')}"
+    }
 }
+
 
 
 task gitGradlew{task->
