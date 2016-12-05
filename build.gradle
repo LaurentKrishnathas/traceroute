@@ -43,6 +43,13 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+
+clean.doLast{
+    logger.warn "deleting $downloadWindowsGit32.destinationDir"
+    ant.delete(dir: downloadWindowsGit32.destinationDir)
+}
+
+
 task traceroute(){
     description="tracing some hostnames ..."
     ext.destinationDir="$buildDir/$name" as File
@@ -268,25 +275,35 @@ task generateKeystore(type: Exec){ task->
 
 task downloadWindowsGit32(type: devops.DownloadTask){
     description="download git 32 to destination folder"
-    destinationDir="$rootDir/gits32" as File
+    destinationDir="$rootDir/gits" as File
     url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"
 }
 
 task downloadWindowsGit64(type: devops.DownloadTask){
     description="download git 32 to destination folder"
-    destinationDir="$rootDir/bin/gits32" as File
+    destinationDir="$rootDir/bin/gits" as File
     url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
 }
 
 
-clean.doLast{
-    logger.warn "deleting $downloadWindowsGit32.destinationDir"
-    ant.delete(dir: downloadWindowsGit32.destinationDir)
+task gitGradlew{task->
+    description= "generate  ${task.name}.bat"
+
+    ext{
+        destinationFile="$project.rootDir/${task.name}.bat" as File
+    }
+    
+    outputs.file destinationFile
+
+    doLast{
+        project.delete(destinationFile)
+        destinationFile.text="""
+            @echo off
+            bin\\gits\\git pull
+            gradlew.bat %1 %2 %3 %4 %5 -Dlog=debug      
+        """.stripIndent()               
+    }
 }
-
-//
-//https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe
-
 
 
 

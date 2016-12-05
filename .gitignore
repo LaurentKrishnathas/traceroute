@@ -11,3 +11,5 @@ gradle-app.setting
 .gradletasknamecache
 
 **/.DS_Store
+
+gitGradlew.bat
