@@ -279,11 +279,7 @@ task gitPull(){task->
     dependsOn 'makeGitRepo'
     description="??"
 
-    // ext.destinationDir="$buildDir/$task.name" as File
-
     doLast{
-        delete(destinationDir)
-        mkdir(destinationDir)
 
         exec{
             executable="cmd"
@@ -291,7 +287,6 @@ task gitPull(){task->
             args "/C", makeGitRepo.gitExe, 'pull'
             logger.lifecycle "/> $executable ${args.join(' ')}"
         }
-        // new File(destinationDir, "output.txt").text="done"
     }
 }
 
@@ -323,7 +318,7 @@ task makeGitRepo(){task->
             }
 
             assert gitDir.exists(): "$gitDir must exits"
-            assert gitDir.listFile().size()>0: "$gitDir size must be not zero"
+            assert gitDir.listFiles().size()>0: "$gitDir size must be not zero"
         }
     }
 }
