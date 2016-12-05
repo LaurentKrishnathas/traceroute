@@ -363,7 +363,7 @@ task extractGit(){task->
         def file=downloadGit.destinationDir.listFiles().find{it.name.endsWith('.exe')}
         assert file.exists():'exe file is missing'
         ant.copy(file: file, tofile: exeFile)
-        mkdir(workingDir)
+        mkdir(destinationDir)
 
         exec{
             workingDir destinationDir
