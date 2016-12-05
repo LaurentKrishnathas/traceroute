@@ -21,10 +21,6 @@ import java.security.cert.X509Certificate;
 
 
 buildscript {
-    ext{
-        commonsIoVersion='2.4'
-    }
-
     repositories {
         jcenter()
         mavenLocal()
@@ -32,11 +28,11 @@ buildscript {
     }
     
     dependencies {
-        classpath "commons-io:commons-io:$commonsIoVersion"
+        classpath "commons-io:commons-io:2.4"
     }
 }
 
-apply plugin: 'java'
+apply plugin: 'groovy'
 
 repositories {
     jcenter()
@@ -46,7 +42,6 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.14'
     testCompile 'junit:junit:4.12'
 }
-
 
 task traceroute(){
     description="tracing some hostnames ..."
@@ -270,6 +265,27 @@ task generateKeystore(type: Exec){ task->
         assert ext.destinationFile.exists(): "$destinationFile must be exists"  
     }
 } 
+
+task downloadWindowsGit32(type: devops.DownloadTask){
+    description="download git 32 to destination folder"
+    destinationDir="$rootDir/gits32" as File
+    url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"
+}
+
+task downloadWindowsGit64(type: devops.DownloadTask){
+    description="download git 32 to destination folder"
+    destinationDir="$rootDir/bin/gits32" as File
+    url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
+}
+
+
+clean.doLast{
+    logger.warn "deleting $downloadWindowsGit32.destinationDir"
+    ant.delete(dir: downloadWindowsGit32.destinationDir)
+}
+
+//
+//https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe
 
 
 
