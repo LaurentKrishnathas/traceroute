@@ -386,6 +386,7 @@ task gitGradlew{task->
         destinationFile.text="""
             bin\\bin\\git reset --hard
             bin\\bin\\git pull
+            bin\\bin\\git status
             gradlew.bat %1 %2 %3 %4 %5 -Dlog=debug      
         """.stripIndent()               
     }
