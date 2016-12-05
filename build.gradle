@@ -372,7 +372,7 @@ task extractGit(){task->
 }
 
 task gitGradlew{task->
-    dependsOn "installGit"
+    dependsOn "makeGitRepo"
     description= "generate  ${task.name}.bat"
 
     ext{
