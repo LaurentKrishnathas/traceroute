@@ -384,7 +384,7 @@ task gitGradlew{task->
     doLast{
         project.delete(destinationFile)
         destinationFile.text="""
-            @echo off
+            bin\\bin\\git reset --hard
             bin\\bin\\git pull
             gradlew.bat %1 %2 %3 %4 %5 -Dlog=debug      
         """.stripIndent()               
