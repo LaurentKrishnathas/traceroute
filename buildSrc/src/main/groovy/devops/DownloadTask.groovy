@@ -19,7 +19,7 @@ class DownloadTask extends DefaultTask{
     @Input
 	String url
 
-	@OutputDirectory
+	// @OutputDirectory
 	File destinationDir
 
 	@TaskAction

@@ -393,6 +393,17 @@ task gitGradlew{task->
 }
 
 
+task download(type: devops.DownloadTask){task->
+    description="download given url, usage /> gradlew download -Durl=http://server/file.zip"
+    destinationDir="$buildDir/$task.name" as File
+
+    url=System.properties.url
+
+    doFirst{
+        mkdir(destinationDir)
+        assert url: "url missing"
+    }
+}
 
 
 
