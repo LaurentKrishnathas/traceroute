@@ -413,6 +413,7 @@ task clone{task->
         gitDir="$rootDir/.git" as File
         uri= "https://github.com/laurentkrishnathas/utils"
     }
+
     doLast{
         delete(outputDir)
         mkdir(outputDir)
@@ -424,6 +425,7 @@ task clone{task->
         }
     }
 }
+clone.onlyIf { !clone.gitDir.exists() }
 
 task pull{task->
     description=" "
