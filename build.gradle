@@ -105,15 +105,6 @@ task traceroute(){
     }
 }
 
-task hello{
-    description="hello test"
-
-    doLast{
-        println "hello $it, $it.description"
-    }
-}
-
-
 task fillDisk(){
     description="will fill the hard disk to errase all deleted files"
     ext.destinationDir="$buildDir/$name" as File
@@ -271,60 +262,12 @@ task generateKeystore(type: Exec){ task->
 task downloadGit(type: devops.DownloadTask){task->
     description="download git 32 to destination folder"
     destinationDir="$buildDir/$task.name" as File
-    url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"
-    
-    // 64 url="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
+    url32="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"    
+    url64="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
+    url=url64
 }
 
-task gitPull(){task->
-    dependsOn 'makeGitRepo'
-    description="??"
-
-    doLast{
-
-        exec{
-            executable="cmd"
-            workingDir rootDir
-            args "/C", makeGitRepo.gitExe, 'pull'
-            logger.lifecycle "/> $executable ${args.join(' ')}"
-        }
-    }
-}
-
-task makeGitRepo(){task->
-    dependsOn 'installGit'
-    description="??"
-
-    ext{
-        destinationDir="$buildDir/$task.name" as File
-        gitDir="$rootDir/.git" as File
-        gitExe="$rootDir/bin/bin/git.exe" as File
-    }
-
-    doLast{
-        delete(destinationDir)
-        mkdir(destinationDir)
-        if(!gitDir.exists()){
-            exec{
-                executable="cmd"
-                workingDir destinationDir
-                args "/C", gitExe, 'clone', "https://github.com/LaurentKrishnathas/utils.git"
-                logger.lifecycle "/> $executable ${args.join(' ')}"
-            }
-
-            def checkoutGitDir="$destinationDir/utils/.git" as File
-            assert checkoutGitDir.exists(): "$checkoutGitDir must exits"
-            ant.copy(todir: gitDir){
-                fileset(dir: checkoutGitDir)
-            }
-
-            assert gitDir.exists(): "$gitDir must exits"
-            assert gitDir.listFiles().size()>0: "$gitDir size must be not zero"
-        }
-    }
-}
-
-task installGit(){task->
+task installGit{task->
     dependsOn 'extractGit'
     description="???"
 
@@ -344,7 +287,7 @@ task installGit(){task->
     }
 }
 
-task extractGit(){task->
+task extractGit{task->
     dependsOn 'downloadGit'
     description="install git"
 
@@ -372,28 +315,6 @@ task extractGit(){task->
     }
 }
 
-task gitGradlew{task->
-    dependsOn "makeGitRepo"
-    description= "generate  ${task.name}.bat"
-
-    ext{
-        destinationFile="$project.rootDir/${task.name}.bat" as File
-    }
-    
-    outputs.file destinationFile
-
-    doLast{
-        project.delete(destinationFile)
-        destinationFile.text="""
-            bin\\bin\\git reset --hard
-            bin\\bin\\git pull
-            bin\\bin\\git status
-            gradlew.bat %1 %2 %3 %4 %5 -Dlog=debug      
-        """.stripIndent()               
-    }
-}
-
-
 task download(type: devops.DownloadTask){task->
     description="download given url, usage /> gradlew download -Durl=http://server/file.zip"
     destinationDir="$buildDir/$task.name" as File
@@ -407,7 +328,7 @@ task download(type: devops.DownloadTask){task->
 }
 
 task clone{task->
-    description=" "
+    description="will download repo and make the current a git repo"
     ext{
         outputDir="$buildDir/$task.name" as File
         gitDir="$rootDir/.git" as File
@@ -432,7 +353,7 @@ task clone{task->
 clone.onlyIf { !clone.gitDir.exists() }
 
 task pull{task->
-    description=" "
+    description="update current git repo"
     ext{
         outputDir="$buildDir/$task.name" as File
         gitDir="$rootDir/.git" as File
