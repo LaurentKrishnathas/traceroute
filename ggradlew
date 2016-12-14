@@ -1,0 +1,2 @@
+./gradlew clone pull
+./gradlew $* -Dlog=debug      
