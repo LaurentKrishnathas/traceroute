@@ -91,8 +91,10 @@ task gitStatus(dependsOn: 'gitClone'){task->
 task downloadGitBinary(type: devops.DownloadTask){task->
     description="Legacy:before git plugin > download git 32 to destination folder"
     destinationDir="$buildDir/$task.name" as File
-    url32="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"    
-    url64="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
+    ext{
+        url32="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"    
+        url64="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"    
+    }
     url=url64
 }
 
