@@ -422,7 +422,7 @@ task clone{task->
             logger.warn "$gitDir exists , cloning skipped ..."
         }else{
             Grgit.clone(dir:outputDir, bare: false, uri: uri)
-            ant.move(todir: "$outputDir/test/.git"){
+            ant.move(todir: gitDir){
                 fileset(dir: "$outputDir/.git")
             }
             delete(outputDir)
