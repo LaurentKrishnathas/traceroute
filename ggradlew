@@ -1,2 +1,2 @@
-./gradlew clone pull -q
+./gradlew gitClone gitPull -q
 ./gradlew $* -Dlog=debug      

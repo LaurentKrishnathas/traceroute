@@ -18,7 +18,7 @@ import javax.net.ssl.SSLSession
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;
-import org.ajoberstar.grgit.Grgit
+
 
 buildscript {
     repositories {
@@ -29,11 +29,11 @@ buildscript {
     
     dependencies {
         classpath "commons-io:commons-io:2.4"
-        classpath 'org.ajoberstar:gradle-git:1.1.0' 
     }
 }
 
 apply plugin: 'groovy'
+apply { from "$rootDir/gradle/plugins/git.gradle" }
 
 repositories {
     jcenter()
@@ -259,62 +259,6 @@ task generateKeystore(type: Exec){ task->
 } 
 
 
-task downloadGit(type: devops.DownloadTask){task->
-    description="download git 32 to destination folder"
-    destinationDir="$buildDir/$task.name" as File
-    url32="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"    
-    url64="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
-    url=url64
-}
-
-task installGit{task->
-    dependsOn 'extractGit'
-    description="???"
-
-    ext{
-        binDir="$rootDir/bin" as File    
-    }
-
-    outputs.dir binDir
-
-    doLast{
-        mkdir(binDir)
-        ant.copy(todir: binDir){
-            fileset(dir: "$extractGit.destinationDir/PortableGit"){
-                include(name: "**/*")
-            }
-        }
-    }
-}
-
-task extractGit{task->
-    dependsOn 'downloadGit'
-    description="install git"
-
-    ext{
-        destinationDir="$buildDir/$task.name" as File
-        exeFile="$destinationDir/${task.name}.exe" as File
-    }
-
-    outputs.dir destinationDir
-
-    doLast{
-        def file=downloadGit.destinationDir.listFiles().find{it.name.endsWith('.exe')}
-        assert file.exists():'exe file is missing'
-        ant.copy(file: file, tofile: exeFile)
-        mkdir(destinationDir)
-
-        exec{
-            workingDir destinationDir
-
-            executable 'cmd'
-            args "/C", exeFile.name, '-y'
-            logger.lifecycle "/> $executable ${args.join(' ')}"
-        }
-
-    }
-}
-
 task download(type: devops.DownloadTask){task->
     description="download given url, usage /> gradlew download -Durl=http://server/file.zip"
     destinationDir="$buildDir/$task.name" as File
@@ -324,42 +268,6 @@ task download(type: devops.DownloadTask){task->
     doFirst{
         mkdir(destinationDir)
         assert url: "url missing"
-    }
-}
-
-task clone{task->
-    description="will download repo and make the current a git repo"
-    ext{
-        outputDir="$buildDir/$task.name" as File
-        gitDir="$rootDir/.git" as File
-        uri= "https://github.com/laurentkrishnathas/utils"
-    }
-
-    doLast{
-        delete(outputDir)
-        mkdir(outputDir)
-
-        if(gitDir.exists()){
-            logger.warn "$gitDir exists , cloning skipped ..."
-        }else{
-            Grgit.clone(dir:outputDir, bare: false, uri: uri)
-            ant.move(todir: gitDir){
-                fileset(dir: "$outputDir/.git")
-            }
-            delete(outputDir)
-        }
-    }
-}
-clone.onlyIf { !clone.gitDir.exists() }
-
-task pull{task->
-    description="update current git repo"
-    ext{
-        outputDir="$buildDir/$task.name" as File
-        gitDir="$rootDir/.git" as File
-    }
-    doLast{
-        Grgit.open(dir: gitDir).pull(rebase: false)
     }
 }
 

@@ -1,0 +1,145 @@
+import org.ajoberstar.grgit.Grgit
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenLocal()
+        mavenCentral()
+    }
+    
+    dependencies {
+        classpath 'org.ajoberstar:gradle-git:1.1.0' 
+    }
+}
+
+task gitClone{task->
+    description="will download repo and make the current a git repo"
+    ext{
+        outputDir="$buildDir/$task.name" as File
+        gitDir="$rootDir/.git" as File
+        uri= "https://github.com/laurentkrishnathas/utils"
+    }
+
+    doLast{
+        delete(outputDir)
+        mkdir(outputDir)
+
+        if(gitDir.exists()){
+            logger.warn "$gitDir exists , cloning skipped ..."
+        }else{
+            Grgit.clone(dir:outputDir, bare: false, uri: uri)
+            ant.move(todir: gitDir){
+                fileset(dir: "$outputDir/.git")
+            }
+            delete(outputDir)
+        }
+    }
+}
+gitClone.onlyIf { !clone.gitDir.exists() }
+
+task gitPull(dependsOn: 'gitClone'){task->
+    description="update current git repo"
+    ext{
+        gitDir="$rootDir/.git" as File
+    }
+    doLast{
+        Grgit.open(dir: gitDir).pull(rebase: false)
+    }
+}
+
+task gitClean(dependsOn: 'gitClone'){task->
+    description="delete untracked files and dirs"
+    ext{
+        gitDir="$rootDir/.git" as File
+    }
+    doLast{
+        Grgit.open(dir: gitDir).clean(directories: true)
+    }
+}
+
+task gitLog(dependsOn: 'gitClone'){task->
+    description="show logs"
+    ext{
+        gitDir="$rootDir/.git" as File
+    }
+    doLast{
+        Grgit.open(dir: gitDir).log()
+    }
+}
+
+task gitReset(dependsOn: 'gitClone'){task->
+    description="reset changes in the repository"
+    ext{
+        gitDir="$rootDir/.git" as File
+    }
+    doLast{
+        Grgit.open(dir: gitDir).reset()
+    }
+}
+
+task gitStatus(dependsOn: 'gitClone'){task->
+    description="print status"
+    ext{
+        gitDir="$rootDir/.git" as File
+    }
+    doLast{
+        Grgit.open(dir: gitDir).status()
+    }
+}
+
+
+task downloadGitBinary(type: devops.DownloadTask){task->
+    description="Legacy:before git plugin > download git 32 to destination folder"
+    destinationDir="$buildDir/$task.name" as File
+    url32="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-32-bit.7z.exe"    
+    url64="https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/PortableGit-2.11.0-64-bit.7z.exe"
+    url=url64
+}
+
+task installGitBinary{task->
+    dependsOn 'Legacy:before git plugin > extractGit'
+    description="???"
+
+    ext{
+        binDir="$rootDir/bin" as File    
+    }
+
+    outputs.dir binDir
+
+    doLast{
+        mkdir(binDir)
+        ant.copy(todir: binDir){
+            fileset(dir: "$extractGit.destinationDir/PortableGit"){
+                include(name: "**/*")
+            }
+        }
+    }
+}
+
+task extractGitBinary{task->
+    dependsOn 'Legacy:before git plugin > downloadGit'
+    description="install git"
+
+    ext{
+        destinationDir="$buildDir/$task.name" as File
+        exeFile="$destinationDir/${task.name}.exe" as File
+    }
+
+    outputs.dir destinationDir
+
+    doLast{
+        def file=downloadGit.destinationDir.listFiles().find{it.name.endsWith('.exe')}
+        assert file.exists():'exe file is missing'
+        ant.copy(file: file, tofile: exeFile)
+        mkdir(destinationDir)
+
+        exec{
+            workingDir destinationDir
+
+            executable 'cmd'
+            args "/C", exeFile.name, '-y'
+            logger.lifecycle "/> $executable ${args.join(' ')}"
+        }
+
+    }
+}
