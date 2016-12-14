@@ -63,12 +63,14 @@ task gitLog(dependsOn: 'gitClone'){task->
         gitDir="$rootDir/.git" as File
     }
     doLast{
-        Grgit.open(dir: gitDir).log()
+        Grgit.open(dir: gitDir).log().each{
+            println it
+        }
     }
 }
 
 task gitReset(dependsOn: 'gitClone'){task->
-    description="reset changes in the repository"
+    description="Warning: not doing a reset --hard as expected > reset changes in the repository"
     ext{
         gitDir="$rootDir/.git" as File
     }
@@ -83,10 +85,9 @@ task gitStatus(dependsOn: 'gitClone'){task->
         gitDir="$rootDir/.git" as File
     }
     doLast{
-        Grgit.open(dir: gitDir).status()
+       println Grgit.open(dir: gitDir).status()
     }
 }
-
 
 task downloadGitBinary(type: devops.DownloadTask){task->
     description="Legacy:before git plugin > download git 32 to destination folder"
