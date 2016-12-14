@@ -35,7 +35,7 @@ task gitClone{task->
         }
     }
 }
-gitClone.onlyIf { !clone.gitDir.exists() }
+gitClone.onlyIf { !gitClone.gitDir.exists() }
 
 task gitPull(dependsOn: 'gitClone'){task->
     description="update current git repo"
