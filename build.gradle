@@ -421,7 +421,7 @@ task clone{task->
         if(gitDir.exists()){
             logger.warn "$gitDir exists , cloning skipped ..."
         }else{
-            Grgit.clone(dir:gitDir, bare: false, uri: uri)
+            Grgit.clone(dir:gitDir, bare: true, uri: uri)
         }
     }
 }
